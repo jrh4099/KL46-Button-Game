@@ -1,0 +1,536 @@
+
+
+
+ARM Macro Assembler    Page 1 KL46Z Bare Metal Assembly Startup
+
+
+    1 00000000                 TTL              KL46Z Bare Metal Assembly Startup
+    2 00000000         ;****************************************************************
+    3 00000000         ;* Flash configuration image for area at 0x400-0x40F(+)
+    4 00000000         ;* SystemInit subroutine (++)
+    5 00000000         ;* SetClock48MHz subroutine (+, +++)
+    6 00000000         ;+:Following [3]
+    7 00000000         ;++:Following [1].1.1.4.2 Startup routines and [2]
+    8 00000000         ;+++:Following [1].4.1 Clocking
+    9 00000000         ;[1] Freescale Semiconductor, <B>Kinetis L Peripheral Module Quick
+   10 00000000         ;    Reference</B>, KLQRUG, Rev. 0, 9/2012.
+   11 00000000         ;[2] ARM, <B>Application Note 48 Scatter Loading</B>, ARM DAI 0048A,
+   12 00000000         ;    Jan. 1998
+   13 00000000         ;[3] Freescale startup_MKL46Z4.s
+   14 00000000         ;    Device specific configuration file for MKL46Z4
+   15 00000000         ;    rev. 2.2, 4/12/2013
+   16 00000000         ;Name:  R. W. Melton
+   17 00000000         ;Date:  September 25, 2017
+   18 00000000         ;Class:  CMPE 250
+   19 00000000         ;Section:  All sections
+   20 00000000         ;****************************************************************
+   21 00000000         ;Include files
+   22 00000000         ;  MKL46Z4.s
+   23 00000000                 GET              MKL46Z4.s
+   25 00000000         ;****************************************************************
+   26 00000000                 AREA             Start,CODE,READONLY
+   27 00000000                 EXPORT           Startup
+   28 00000000         ;---------------------------------------------------------------
+   29 00000000         Startup PROC             {},{}
+   30 00000000         ;****************************************************************
+   31 00000000         ;Performs the following startup tasks
+   32 00000000         ;* System initialization
+   33 00000000         ;* Mask interrupts
+   34 00000000         ;* Configure 48-MHz system clock
+   35 00000000         ;****************************************************************
+   36 00000000         ;Save return address
+   37 00000000 B500            PUSH             {LR}
+   38 00000002         ;Initialize system
+   39 00000002 F7FF FFFE       BL               SystemInit
+   40 00000006         ;Mask interrupts
+   41 00000006 B672            CPSID            I
+   42 00000008         ;Configure 48-MHz system clock
+   43 00000008 F7FF FFFE       BL               SetClock48MHz
+
+
+
+ARM Macro Assembler    Page 2 KL46Z Bare Metal Assembly Startup
+
+
+   44 0000000C         ;Return
+   45 0000000C BD00            POP              {PC}
+   46 0000000E                 ENDP
+   47 0000000E         ;---------------------------------------------------------------
+   48 0000000E         SystemInit
+                               PROC             {},{}
+   49 0000000E         ;****************************************************************
+   50 0000000E         ;Performs the following system initialization tasks.
+   51 0000000E         ;* Mask interrupts
+   52 0000000E         ;* Disable watchdog timer (+)
+   53 0000000E         ;* Load initial RAM image from end of loaded flash image (++) [2]
+   54 0000000E         ;* Initialize registers to known state for debugger
+   55 0000000E         ;+:Following [1].1.1.4.2 Startup routines: 1 Disable watchdog
+   56 0000000E         ;++:Step suggested [1].1.1.4.2 Startup routtines: 2 Initialize RAM
+   57 0000000E         ;[1] Freescale Semiconductor, <B>Kinetis L Peripheral Module Quick
+   58 0000000E         ;    Reference</B>, KLQRUG, Rev. 0, 9/2012.
+   59 0000000E         ;[2] ARM, <B>Application Note 48 Scatter Loading</B>, ARM DAI 0048A,
+   60 0000000E         ;    Jan. 1998
+   61 0000000E         ;****************************************************************
+   62 0000000E         ;Mask interrupts
+   63 0000000E B672            CPSID            I
+   64 00000010         ;Disable watchdog timer
+   65 00000010         ;SIM_COPC:  COPT=0,COPCLKS=0,COPW=0
+   66 00000010 4830            LDR              R0,=SIM_COPC
+   67 00000012 2100            MOVS             R1,#0
+   68 00000014 6001            STR              R1,[R0,#0]
+   69 00000016         ;Put return on stack
+   70 00000016 B500            PUSH             {LR}
+   71 00000018         ;Initialize registers
+   72 00000018 492F            LDR              R1,=0x11111111
+   73 0000001A 184A            ADDS             R2,R1,R1
+   74 0000001C 1853            ADDS             R3,R2,R1
+   75 0000001E 185C            ADDS             R4,R3,R1
+   76 00000020 1865            ADDS             R5,R4,R1
+   77 00000022 186E            ADDS             R6,R5,R1
+   78 00000024 1877            ADDS             R7,R6,R1
+   79 00000026 1878            ADDS             R0,R7,R1
+   80 00000028 4680            MOV              R8,R0
+   81 0000002A 1840            ADDS             R0,R0,R1
+   82 0000002C 4681            MOV              R9,R0
+   83 0000002E 1840            ADDS             R0,R0,R1
+   84 00000030 4682            MOV              R10,R0
+
+
+
+ARM Macro Assembler    Page 3 KL46Z Bare Metal Assembly Startup
+
+
+   85 00000032 1840            ADDS             R0,R0,R1
+   86 00000034 4683            MOV              R11,R0
+   87 00000036 1840            ADDS             R0,R0,R1
+   88 00000038 4684            MOV              R12,R0
+   89 0000003A 1840            ADDS             R0,R0,R1
+   90 0000003C 1840            ADDS             R0,R0,R1
+   91 0000003E 4686            MOV              R14,R0
+   92 00000040 2000            MOVS             R0,#0
+   93 00000042 BD00            POP              {PC}
+   94 00000044                 ENDP
+   95 00000044         ;---------------------------------------------------------------
+   96 00000044         SetClock48MHz
+                               PROC             {R0-R14},{}
+   97 00000044         ;****************************************************************
+   98 00000044         ;Establishes 96-MHz PLL clock from 8-MHz external oscillator,
+   99 00000044         ;with divide by 2 for core clock of 48-MHz.
+  100 00000044         ;Follows [2] and [1].4.1 Clocking 3: Configuration examples
+  101 00000044         ;[1] Freescale Semiconductor, <B>Kinetis L Peripheral Module Quick
+  102 00000044         ;    Reference</B>, KLQRUG, Rev. 0, 9/2012.
+  103 00000044         ;[3] Freescale startup_MKL46Z4.s
+  104 00000044         ;    Device specific configuration file for MKL46Z4
+  105 00000044         ;    rev. 2.2, 4/12/2013
+  106 00000044         ;Modifies:  condition flags
+  107 00000044         ;****************************************************************
+  108 00000044 B40F            PUSH             {R0-R3}
+  109 00000046         ;Configure for external clock from external 8-MHz oscillator
+  110 00000046         ;  EXTAL0 on PTA18
+  111 00000046         ;  XTAL0 on PTA19
+  112 00000046         ;Enable PORT A
+  113 00000046 4825            LDR              R0,=SIM_SCGC5
+  114 00000048 4925            LDR              R1,=SIM_SCGC5_PORTA_MASK
+  115 0000004A 6802            LDR              R2,[R0,#0]
+  116 0000004C 430A            ORRS             R2,R2,R1
+  117 0000004E 6002            STR              R2,[R0,#0]
+  118 00000050         ;Set PORT A Pin 18 for EXTAL0 (MUX select 0)
+  119 00000050 4824            LDR              R0,=PORTA_BASE
+  121 00000052 4925            LDR              R1,=(PORT_PCR_ISF_MASK :OR:                            PORT_PCR_MUX_SEL
+ECT_0_MASK)
+  122 00000054 6481            STR              R1,[R0,#PORTA_PCR18_OFFSET]
+  123 00000056         ;Set PORT A Pin 19 for XTAL0 (MUX select 0)
+  124 00000056 64C1            STR              R1,[R0,#PORTA_PCR19_OFFSET]
+  125 00000058         ;Update system clock dividers to 2
+
+
+
+ARM Macro Assembler    Page 4 KL46Z Bare Metal Assembly Startup
+
+
+  126 00000058         ;[1] defers this step until first part of switching to FEE mode
+  127 00000058         ;  SIM_CLKDIV1: OUTDIV1=1,OUTDIV4=1
+  128 00000058 4824            LDR              R0,=SIM_CLKDIV1
+  130 0000005A 4925            LDR              R1,=((1 << SIM_CLKDIV1_OUTDIV1_SHIFT) :OR:                            (
+1 << SIM_CLKDIV1_OUTDIV4_SHIFT))
+  131 0000005C 6001            STR              R1,[R0,#0]
+  132 0000005E         ;------------------------------------------
+  133 0000005E         ;Establish FLL bypassed external mode (FBE)
+  134 0000005E         ;------------------------------------------
+  135 0000005E         ;First configure oscillator settings in MCG_C2
+  136 0000005E         ;  RANGE is determined from external frequency
+  137 0000005E         ;  Since RANGE affects FRDIV, it must be set
+  138 0000005E         ;  correctly even with an external clock
+  139 0000005E         ;  [3] (newer) indicates VHF RANGE=2,
+  140 0000005E         ;  whereas [1] indicates HF RANGE=1
+  141 0000005E         ;  Preserve existing FCFTRIM value
+  142 0000005E         ;  MCG_C2:  LOCRE0=0,RANGE0=2,HGO0=0,EREFS0=1,LP=0,IRCS=0
+  143 0000005E 4825            LDR              R0,=MCG_BASE
+  145 00000060 2124            MOVS             R1,#((2 << MCG_C2_RANGE0_SHIFT) :OR:                           MCG_C2_E
+REFS0_MASK)
+  146 00000062 7842            LDRB             R2,[R0,#MCG_C2_OFFSET]
+  147 00000064 2340            MOVS             R3,#MCG_C2_FCFTRIM_MASK
+  148 00000066 401A            ANDS             R2,R2,R3
+  149 00000068 4311            ORRS             R1,R1,R2
+  150 0000006A 7041            STRB             R1,[R0,#MCG_C2_OFFSET]
+  151 0000006C         ;Enable external reference clock OSCERCLK,
+  152 0000006C         ;and add 2 pF to oscillator load
+  153 0000006C         ;OSC0->CR:  ERCLKEN=1,EREFSTEN=0,SC2P=1,SC4P=0,SC8P=0,SC16P=0
+  154 0000006C 4A22            LDR              R2,=OSC0_CR
+  156 0000006E 2188            MOVS             R1,#(OSC_CR_ERCLKEN_MASK :OR:                           OSC_CR_SC2P_MAS
+K)
+  157 00000070 7011            STRB             R1,[R2,#0]
+  158 00000072         ;FRDIV set to keep FLL ref clock within
+  159 00000072         ;correct range, determined by ref clock.
+  160 00000072         ;  For 8-MHz ref, need divide by 256 (FRDIV = 3)
+  161 00000072         ;  CLKS must be set to 2_10 to select
+  162 00000072         ;    external reference clock
+  163 00000072         ;  Clearing IREFS selects and enables
+  164 00000072         ;    external oscillator
+  165 00000072         ;  [3] sets IRCLKEN for internal reference clock as MCGIRCLK
+  166 00000072         ;  MCG_C1:  CLKS=2,FRDIV=3,IREFS=0,IRCLKEN=1,IREFSTEN=0
+  169 00000072 219A            MOVS             R1,#((2 << MCG_C1_CLKS_SHIFT) :OR:                           (3 << MCG_
+
+
+
+ARM Macro Assembler    Page 5 KL46Z Bare Metal Assembly Startup
+
+
+C1_FRDIV_SHIFT) :OR:                           MCG_C1_IRCLKEN_MASK)
+  170 00000074 7001            STRB             R1,[R0,#MCG_C1_OFFSET]
+  171 00000076         ;[3] Ensure reset values for MCG_C4 DMX32 and DRST_DRS
+  172 00000076         ;[1] omits this step
+  173 00000076         ;Reference range:  31.25–39.0625 kHz
+  174 00000076         ;FLL factor:  640
+  175 00000076         ;DCO range:  20-25 MHz
+  176 00000076         ;Preserve FCTRIM and SCFTRIM
+  177 00000076         ;MCG_C4:  DMX32=0,DRST_DRS=0
+  178 00000076 78C2            LDRB             R2,[R0,#MCG_C4_OFFSET]
+  180 00000078 21E0            MOVS             R1,#(MCG_C4_DMX32_MASK :OR:                           MCG_C4_DRST_DRS_M
+ASK)
+  181 0000007A 438A            BICS             R2,R2,R1
+  182 0000007C 70C2            STRB             R2,[R0,#MCG_C4_OFFSET]
+  183 0000007E         ;[3] Disable PLL
+  184 0000007E         ;[1] omits this step
+  185 0000007E         ;[3] sets PRDIV0=1 here, whereas
+  186 0000007E         ;[1] waits until switch to PBE mode
+  187 0000007E         ;MCG_C5:  PLLCLKEN0=0,PLLSTEN0=0,PRDIV0=1
+  188 0000007E 2101            MOVS             R1,#(1 << MCG_C5_PRDIV0_SHIFT)
+  189 00000080 7101            STRB             R1,[R0,#MCG_C5_OFFSET]
+  190 00000082         ;[3] Select FLL
+  191 00000082         ;[1] omits this step
+  192 00000082         ;MCG_C6:  LOLIE0=0,PLLS=0,CME0=0,VDIV0=0
+  193 00000082 2100            MOVS             R1,#0
+  194 00000084 7141            STRB             R1,[R0,#MCG_C6_OFFSET]
+  195 00000086         ;Wait for oscillator initialization cycles
+  196 00000086         ;to complete
+  197 00000086         ;[3] omits this step
+  198 00000086         ;(MCG_S:  OSCINIT0 becomes 1)
+  199 00000086 2102            MOVS             R1,#MCG_S_OSCINIT0_MASK
+  200 00000088         __MCG_Wait_OSCINIT0
+  201 00000088 7982            LDRB             R2,[R0,#MCG_S_OFFSET]
+  202 0000008A 4211            TST              R1,R2
+  203 0000008C D0FC            BEQ              __MCG_Wait_OSCINIT0
+  204 0000008E         ;Wait for source of the FLL reference clock 
+  205 0000008E         ;to be the external reference clock.
+  206 0000008E         ;(MCG_S:  IREFST becomes 0)
+  207 0000008E 2110            MOVS             R1,#MCG_S_IREFST_MASK
+  208 00000090         __MCG_Wait_IREFST_Clear
+  209 00000090 7982            LDRB             R2,[R0,#MCG_S_OFFSET]
+  210 00000092 4211            TST              R1,R2
+
+
+
+ARM Macro Assembler    Page 6 KL46Z Bare Metal Assembly Startup
+
+
+  211 00000094 D1FC            BNE              __MCG_Wait_IREFST_Clear
+  212 00000096         ;Wait for clock status to show
+  213 00000096         ;external reference clock source selected
+  214 00000096         ;(MCG_S:  CLKST becomes 2_10)
+  215 00000096 210C            MOVS             R1,#MCG_S_CLKST_MASK
+  216 00000098         __MCG_Wait_CLKST_EXT
+  217 00000098 7982            LDRB             R2,[R0,#MCG_S_OFFSET]
+  218 0000009A 400A            ANDS             R2,R2,R1
+  219 0000009C 2A08            CMP              R2,#(2 << MCG_S_CLKST_SHIFT)
+  220 0000009E D1FB            BNE              __MCG_Wait_CLKST_EXT
+  221 000000A0         
+  222 000000A0         ;[1] enables clock monitor here MCG_C6:CME0
+  223 000000A0         ;[3] does not enable clock monitor here
+  224 000000A0         ;    and it was disabled above
+  225 000000A0         ;Not enabling here
+  226 000000A0         
+  227 000000A0         ;-----------------------------------------------
+  228 000000A0         ;Switch to PLL bypassed external mode (PBE mode)
+  229 000000A0         ;-----------------------------------------------
+  230 000000A0         ;[1] sets MCG_C5 PRDIV0 = 1 here
+  231 000000A0         ;[3] already set MCG_C5 PRDIV0 = 1 above
+  232 000000A0         ;Already set above
+  233 000000A0         
+  234 000000A0         ;Set PLL multiplier and enable PLL
+  235 000000A0         ;  PLL multiplier = 24 = VDIV0 + 24
+  236 000000A0         ;MCG_C6: LOLIE0=0,PLLS=1,CME0=0,VDIV0=0
+  237 000000A0 2140            MOVS             R1,#MCG_C6_PLLS_MASK
+  238 000000A2 7141            STRB             R1,[R0,#MCG_C6_OFFSET]
+  239 000000A4         
+  240 000000A4         ;Wait for clock status to show
+  241 000000A4         ;external reference clock source selected
+  242 000000A4         ;[1] omits this step
+  243 000000A4         ;(MCG_S:  CLKST becomes 2_10)
+  244 000000A4 210C            MOVS             R1,#MCG_S_CLKST_MASK
+  245 000000A6         __MCG_Wait_2_CLKST_EXT
+  246 000000A6 7982            LDRB             R2,[R0,#MCG_S_OFFSET]
+  247 000000A8 400A            ANDS             R2,R2,R1
+  248 000000AA 2A08            CMP              R2,#(2 << MCG_S_CLKST_SHIFT)
+  249 000000AC D1FB            BNE              __MCG_Wait_2_CLKST_EXT
+  250 000000AE         ;Wait for PLL select status to show
+  251 000000AE         ;PLL as source of PLLS
+  252 000000AE         ;(MCG_S:  PLLST becomes 1)
+
+
+
+ARM Macro Assembler    Page 7 KL46Z Bare Metal Assembly Startup
+
+
+  253 000000AE 2120            MOVS             R1,#MCG_S_PLLST_MASK
+  254 000000B0         __MCG_Wait_PLLST
+  255 000000B0 7982            LDRB             R2,[R0,#MCG_S_OFFSET]
+  256 000000B2 4211            TST              R1,R2
+  257 000000B4 D0FC            BEQ              __MCG_Wait_PLLST
+  258 000000B6         ;Wait for PLL lock
+  259 000000B6         ;(MCG_S:  LOCK0 becomes 1)
+  260 000000B6 2140            MOVS             R1,#MCG_S_LOCK0_MASK
+  261 000000B8         __MCG_Wait_LOCK0
+  262 000000B8 7982            LDRB             R2,[R0,#MCG_S_OFFSET]
+  263 000000BA 4211            TST              R1,R2
+  264 000000BC D0FC            BEQ              __MCG_Wait_LOCK0
+  265 000000BE         
+  266 000000BE         ;----------------------------------------------
+  267 000000BE         ;Switch to PLL engaged external mode (PEE mode)
+  268 000000BE         ;----------------------------------------------
+  269 000000BE         ;[1] sets system clock dividers to 2 here
+  270 000000BE         ;[3] already set above
+  271 000000BE         ;Already set
+  272 000000BE         
+  273 000000BE         ;Select PLL as MCGCLKOUT
+  274 000000BE         ;FRDIV set to keep FLL ref clock within
+  275 000000BE         ;correct range, determined by ref clock.
+  276 000000BE         ;  For 8-MHz ref, need divide by 256 (FRDIV = 3)
+  277 000000BE         ;  CLKS must be set to 0_10 to select PLL
+  278 000000BE         ;  Clearing IREFS selects and enables
+  279 000000BE         ;    external oscillator
+  280 000000BE         ;  [3] sets IRCLKEN for internal reference clock as MCGIRCLK
+  281 000000BE         ;  MCG_C1:  CLKS=0,FRDIV=3,IREFS=0,IRCLKEN=1,IREFSTEN=0
+  283 000000BE 211A            MOVS             R1,#((3 << MCG_C1_FRDIV_SHIFT) :OR:                           MCG_C1_IR
+CLKEN_MASK)
+  284 000000C0 7001            STRB             R1,[R0,#MCG_C1_OFFSET]
+  285 000000C2         ;Wait for clock status to show PLL clock source
+  286 000000C2         ;(MCG_S:  CLKST becomes 2_11)
+  287 000000C2 210C            MOVS             R1,#MCG_S_CLKST_MASK
+  288 000000C4         __MCG_Wait_CLKST_PLL
+  289 000000C4 7982            LDRB             R2,[R0,#MCG_S_OFFSET]
+  290 000000C6 400A            ANDS             R2,R2,R1
+  291 000000C8 2A0C            CMP              R2,#MCG_S_CLKST_MASK
+  292 000000CA D1FB            BNE              __MCG_Wait_CLKST_PLL
+  293 000000CC         ;Now have 96-MHz PLL clock and
+  294 000000CC         ;48-MHz core clock
+
+
+
+ARM Macro Assembler    Page 8 KL46Z Bare Metal Assembly Startup
+
+
+  295 000000CC BC0F            POP              {R0-R3}
+  296 000000CE 4770            BX               LR
+  297 000000D0                 ENDP
+  298 000000D0         ;****************************************************************
+  299 000000D0                 ALIGN
+  300 000000D0         ;Program template for CMPE-250 uses main as "Reset_Handler"
+  301 000000D0         ;           EXPORT  Reset_Handler
+  302 000000D0         ;****************************************************************
+  303 000000D0         ;Goto main
+  304 000000D0         ;****************************************************************
+  305 000000D0         ;           LDR     R0,=main
+  306 000000D0         ;           BX      R0
+  307 000000D0                 EXPORT           Dummy_Handler
+  308 000000D0                 EXPORT           HardFault_Handler  [WEAK]
+  309 000000D0         Dummy_Handler
+                               PROC             {},{}
+  310 000000D0         HardFault_Handler
+  311 000000D0         ;****************************************************************
+  312 000000D0         ;Dummy exception handler (infinite loop)
+  313 000000D0         ;****************************************************************
+  314 000000D0 E7FE            B                .
+  315 000000D2                 ENDP
+  316 000000D2         ;---------------------------------------------------------------
+  317 000000D2 00 00           ALIGN
+  318 000000D4         ;****************************************************************
+  319 000000D4 40048100 
+              11111111 
+              40048038 
+              00000200 
+              40049000 
+              01000000 
+              40048044 
+              10010000 
+              40064000 
+              40065000         AREA             |.ARM.__at_0xC0|,DATA,NOALLOC,READONLY
+  320 00000000         ;Program once field:  0xC0-0xFF
+  321 00000000 00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+
+
+
+ARM Macro Assembler    Page 9 KL46Z Bare Metal Assembly Startup
+
+
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00               SPACE            0x40
+  322 00000040         ;****************************************************************
+  323 00000040                 IF               :LNOT::DEF:RAM_TARGET
+  324 00000040                 AREA             |.ARM.__at_0x400|,CODE,READONLY
+  325 00000000 FF FF           DCB              FCF_BACKDOOR_KEY0,FCF_BACKDOOR_KEY1
+  326 00000002 FF FF           DCB              FCF_BACKDOOR_KEY2,FCF_BACKDOOR_KEY3
+  327 00000004 FF FF           DCB              FCF_BACKDOOR_KEY4,FCF_BACKDOOR_KEY5
+  328 00000006 FF FF           DCB              FCF_BACKDOOR_KEY6,FCF_BACKDOOR_KEY7
+  329 00000008 FF FF FF 
+              FF               DCB              FCF_FPROT0,FCF_FPROT1,FCF_FPROT2,FCF_FPROT3
+  330 0000000C 7E FF FF 
+              FF               DCB              FCF_FSEC,FCF_FOPT,0xFF,0xFF
+  331 00000010                 ENDIF
+  332 00000010         ;****************************************************************
+  333 00000010                 AREA             |.ARM.__at_0x1FFFE000|,DATA,READWRITE,ALIGN=3
+  334 00000000                 EXPORT           __initial_sp
+  335 00000000         ;Allocate system stack
+  336 00000000                 IF               :LNOT::DEF:SSTACK_SIZE
+  338                          ENDIF
+  339 00000000 00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+
+
+
+ARM Macro Assembler    Page 10 KL46Z Bare Metal Assembly Startup
+
+
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+
+
+
+ARM Macro Assembler    Page 11 KL46Z Bare Metal Assembly Startup
+
+
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00 00 00 
+              00       Stack_Mem
+                               SPACE            SSTACK_SIZE
+  340 00000100         __initial_sp
+  341 00000100         ;****************************************************************
+  342 00000100                 END
+Command Line: --debug --length=49 --width=120 --diag_suppress=9931 --cpu=Cortex-M0+ --apcs=interwork --depend=.\objects\
+start.d -o.\objects\start.o -I.\RTE\_Target_1 -IC:\Keil_v5\ARM\PACK\Keil\Kinetis_KLxx_DFP\1.13.0\Device\Include -IC:\Kei
+
+
+
+ARM Macro Assembler    Page 12 KL46Z Bare Metal Assembly Startup
+
+
+l_v5\ARM\CMSIS\Include --predefine="__EVAL SETA 1" --predefine="__UVISION_VERSION SETA 524" --predefine="MKL46Z256xxx4 S
+ETA 1" --list=.\listings\start.lst Start.s

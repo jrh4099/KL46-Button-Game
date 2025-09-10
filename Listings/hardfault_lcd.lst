@@ -1,0 +1,616 @@
+
+
+
+ARM Macro Assembler    Page 1 KL46Z Hard Fault LCD Display
+
+
+    1 00000000                 TTL              KL46Z Hard Fault LCD Display
+    2 00000000         ;****************************************************************
+    3 00000000         ;HardFault_Handler displays lower halfword of address that caused
+    4 00000000         ;hard fault on LCD.
+    5 00000000         ;Name:  R. W. Melton
+    6 00000000         ;Date:  September 25, 2017
+    7 00000000         ;Class:  CMPE-250
+    8 00000000         ;Section:  All sections
+    9 00000000         ;****************************************************************
+   10 00000000         ;Assembler directives
+   11 00000000                 THUMB
+   13 00000000         ;****************************************************************
+   14 00000000         ;Include files
+   15 00000000                 GET              MKL46Z4.s   ;Included by start.s
+   17 00000000         ;****************************************************************
+   18 00000000         ;EQUates
+   19 00000000         ;KL46 SLCD Module
+   20 00000000 00000000 
+                       LCD_AR_NORMAL_NO_BLINK
+                               EQU              0x00
+   21 00000000         ;LCD_BPEN0:
+   22 00000000         ;  pins 18 and 19
+   23 00000000         ;    3         2         1
+   24 00000000         ;  120987654321098765432109876543210
+   25 00000000         ;2_000000000000011000000000000000000
+   26 00000000         ;0x   0   0    0   C   0   0   0   0
+   27 00000000 000C0000 
+                       LCD_BPEN0_19_18
+                               EQU              0x000C0000
+   28 00000000         ;LCD_BPEN1:
+   29 00000000         ;  pins 52 and 40
+   30 00000000         ;      6         5         4       3
+   31 00000000         ;  321209876543210987654321098765432
+   32 00000000         ;2_000000000000100000000000100000000
+   33 00000000         ;0x   0   0    1   0   0   1   0   0
+   34 00000000 00100100 
+                       LCD_BPEN1_52_40
+                               EQU              0x00100100
+   35 00000000 00000000 
+                       LCD_FDCR_NO_FAULT_DETECTION
+                               EQU              0x0000
+   36 00000000         ;LCD_PEN0:
+
+
+
+ARM Macro Assembler    Page 2 KL46Z Hard Fault LCD Display
+
+
+   37 00000000         ;  pins 7, 8, 10, 11, 17, 18, and 19
+   38 00000000         ;    3         2         1
+   39 00000000         ;  120987654321098765432109876543210
+   40 00000000         ;2_000000000000011100000110110000000
+   41 00000000         ;0x   0   0    0   E   0   D   8   0
+   42 00000000 000E0D80 
+                       LCD_PEN0_19_18_17_11_10_8_7
+                               EQU              0x000E0D80
+   43 00000000         ;LCD_PEN1:
+   44 00000000         ;  pins 37, 38, 40, 52, and 53
+   45 00000000         ;      6         5         4       3
+   46 00000000         ;  321209876543210987654321098765432
+   47 00000000         ;2_000000000001100000000000101100000
+   48 00000000         ;0x   0   0    3   0   0   1   6   0
+   49 00000000 00300160 
+                       LCD_PEN1_53_52_40_38_37
+                               EQU              0x00300160
+   50 00000000         ;---------------------------------------------------------------
+   51 00000000         ;FRDM-KL46Z LUMEX LCD S401M16KR
+   52 00000000         ;SLCD pin connections
+   53 00000000         ;  Backplane
+   54 00000000         ;    COM0 pin 1:   PTD0 Alt0=LCD_P40
+   55 00000000 00000028 
+                       LCD_PIN_1
+                               EQU              40
+   56 00000000         ;    COM1 pin 2:   PTE4 Alt0=LCD_P52
+   57 00000000 00000034 
+                       LCD_PIN_2
+                               EQU              52
+   58 00000000         ;    COM2 pin 3:   PTB23 Alt0=LCD_P19
+   59 00000000 00000013 
+                       LCD_PIN_3
+                               EQU              19
+   60 00000000         ;    COM3 pin 4:   PTB22 Alt0=LCD_P18
+   61 00000000 00000012 
+                       LCD_PIN_4
+                               EQU              18
+   62 00000000         ;  Frontplane
+   63 00000000         ;    DIG1 pin 5:   PTC17 Alt0=LCD_P37
+   64 00000000 00000025 
+                       LCD_DIG1_PIN1
+                               EQU              37
+
+
+
+ARM Macro Assembler    Page 3 KL46Z Hard Fault LCD Display
+
+
+   65 00000000 00000025 
+                       LCD_PIN_5
+                               EQU              37
+   66 00000000         ;    DIG1 pin 6:   PTB21 Alt0=LCD_P17
+   67 00000000 00000011 
+                       LCD_DIG1_PIN2
+                               EQU              17
+   68 00000000 00000011 
+                       LCD_PIN_6
+                               EQU              17
+   69 00000000         ;    DIG2 pin 7:   PTB7 Alt0=LCD_P7
+   70 00000000 00000007 
+                       LCD_DIG2_PIN1
+                               EQU              7
+   71 00000000 00000007 
+                       LCD_PIN_7
+                               EQU              7
+   72 00000000         ;    DIG2 pin 8:   PTB8 Alt0=LCD_P8
+   73 00000000 00000008 
+                       LCD_DIG2_PIN2
+                               EQU              8
+   74 00000000 00000008 
+                       LCD_PIN_8
+                               EQU              8
+   75 00000000         ;    DIG3 pin 9:   PTE5 Alt0=LCD_P53
+   76 00000000 00000035 
+                       LCD_DIG3_PIN1
+                               EQU              53
+   77 00000000 00000035 
+                       LCD_PIN_9
+                               EQU              53
+   78 00000000         ;    DIG3 pin 10:  PTC18 Alt0=LCD_P38
+   79 00000000 00000026 
+                       LCD_DIG3_PIN2
+                               EQU              38
+   80 00000000 00000026 
+                       LCD_PIN_10
+                               EQU              38
+   81 00000000         ;    DIG4 pin 11:  PTB10 Alt0=LCD_P10
+   82 00000000 0000000A 
+                       LCD_DIG4_PIN1
+                               EQU              10
+
+
+
+ARM Macro Assembler    Page 4 KL46Z Hard Fault LCD Display
+
+
+   83 00000000 0000000A 
+                       LCD_PIN_11
+                               EQU              10
+   84 00000000         ;    DIG4 pin 12:  PTB11 Alt0=LCD_P11
+   85 00000000 0000000B 
+                       LCD_DIG4_PIN2
+                               EQU              11
+   86 00000000 0000000B 
+                       LCD_PIN_12
+                               EQU              11
+   87 00000000         ;All digit segments:  DIG1-DIG4
+   88 00000000         ;  A
+   89 00000000         ;F   B
+   90 00000000         ;  G
+   91 00000000         ;E   C
+   92 00000000         ;  D
+   93 00000000         ;  First register phases
+   94 00000000 00000011 
+                       LCD_SEG_D
+                               EQU              0x11
+   95 00000000 00000022 
+                       LCD_SEG_E
+                               EQU              0x22
+   96 00000000 00000044 
+                       LCD_SEG_G
+                               EQU              0x44
+   97 00000000 00000088 
+                       LCD_SEG_F
+                               EQU              0x88
+   98 00000000         ;  Second register phases
+   99 00000000 00000022 
+                       LCD_SEG_C
+                               EQU              0x22
+  100 00000000 00000044 
+                       LCD_SEG_B
+                               EQU              0x44
+  101 00000000 00000088 
+                       LCD_SEG_A
+                               EQU              0x88
+  102 00000000         ;DIG1-DIG3 decimal point to right
+  103 00000000         ;  Second register
+  104 00000000 00000011 
+
+
+
+ARM Macro Assembler    Page 5 KL46Z Hard Fault LCD Display
+
+
+                       LCD_SEG_DECIMAL
+                               EQU              0x11
+  105 00000000         ;"DIG4" colon between DIG2 and DIG3
+  106 00000000         ;  DIG4 Second register
+  107 00000000 00000011 
+                       LCD_SEG_COLON
+                               EQU              0x11
+  108 00000000 00000000 
+                       LCD_CLEAR
+                               EQU              0x00
+  109 00000000         ;****************************************************************
+  110 00000000         ;Program
+  111 00000000         ;Linker requires Reset_Handler
+  112 00000000                 AREA             HardFaultLCD,CODE,READONLY
+  113 00000000                 EXPORT           HardFault_Handler
+  114 00000000         HardFault_Handler
+                               PROC             {},{}
+  115 00000000         ;****************************************************************
+  116 00000000         ;HardFault_Handler displays lower halfword of address that caused
+  117 00000000         ;hard fault on LCD.
+  118 00000000         ;****************************************************************
+  119 00000000         ;Mask interrupts
+  120 00000000 B672            CPSID            I
+  121 00000002         ;Initialize LCD for output of exception address
+  122 00000002 F7FF FFFE       BL               InitLCD
+  123 00000006         ;Display exception address
+  124 00000006 4668            MOV              R0, SP
+  125 00000008 8B00            LDRH             R0,[R0,#24] ;LSH of 7th word on stack
+  126 0000000A F7FF FFFE       BL               LCD_PutHex
+  127 0000000E         ;Stay here
+  128 0000000E E7FE            B                .
+  129 00000010                 ENDP
+  130 00000010         ;---------------------------------------------------------------
+  131 00000010                 EXPORT           InitLCD
+  132 00000010         InitLCD PROC             {R0-R14},{}
+  133 00000010         ;****************************************************************
+  134 00000010         ;Enables segment LCD (SLCD) display using the following ports:
+  135 00000010         ;  COM0 pin 1:   PTD0 Alt0=LCD_P40
+  136 00000010         ;  COM1 pin 2:   PTE4 Alt0=LCD_P52
+  137 00000010         ;  COM2 pin 3:   PTB23 Alt0=LCD_P19
+  138 00000010         ;  COM3 pin 4:   PTB22 Alt0=LCD_P18
+  139 00000010         ;  DIG1 pin 5:   PTC17 Alt0=LCD_P37
+
+
+
+ARM Macro Assembler    Page 6 KL46Z Hard Fault LCD Display
+
+
+  140 00000010         ;  DIG1 pin 6:   PTB21 Alt0=LCD_P17
+  141 00000010         ;  DIG2 pin 7:   PTB7 Alt0=LCD_P7
+  142 00000010         ;  DIG2 pin 8:   PTB8 Alt0=LCD_P8
+  143 00000010         ;  DIG3 pin 9:   PTE5 Alt0=LCD_P53
+  144 00000010         ;  DIG3 pin 10:  PTC18 Alt0=LCD_P38
+  145 00000010         ;  DIG4 pin 11:  PTB10 Alt0=LCD_P10
+  146 00000010         ;  DIG4 pin 12:  PTB11 Alt0=LCD_P11
+  147 00000010         ;Input:  None
+  148 00000010         ;Output:  None
+  149 00000010         ;Modifies:  PSR
+  150 00000010         ;****************************************************************
+  151 00000010         ;Preserve registers used
+  152 00000010 B4FF            PUSH             {R0-R7}
+  153 00000012         ;Select 32-kHz clock for SLCD
+  154 00000012 484D            LDR              R0,=SIM_SOPT1
+  155 00000014 494D            LDR              R1,=SIM_SOPT1_OSC32KSEL_MASK
+  156 00000016 6802            LDR              R2,[R0,#0]
+  157 00000018 438A            BICS             R2,R2,R1
+  158 0000001A 6002            STR              R2,[R0,#0]
+  159 0000001C         ;Enable SLCD and PORTs B, C, D, and E module clocks
+  160 0000001C 484C            LDR              R0,=SIM_SCGC5
+  165 0000001E 494D            LDR              R1,=(SIM_SCGC5_SLCD_MASK :OR:                           SIM_SCGC5_PORTB
+_MASK :OR:                           SIM_SCGC5_PORTC_MASK :OR:                           SIM_SCGC5_PORTD_MASK :OR:   
+                        SIM_SCGC5_PORTE_MASK)
+  166 00000020 6802            LDR              R2,[R0,#0]
+  167 00000022 430A            ORRS             R2,R2,R1
+  168 00000024 6002            STR              R2,[R0,#0]
+  169 00000026         ;Select PORT B Pin 7 for SLCD pin 7 (MUX select 0)
+  170 00000026 484C            LDR              R0,=PORTB_BASE
+  172 00000028 494C            LDR              R1,=(PORT_PCR_ISF_MASK :OR:                           PORT_PCR_MUX_SELE
+CT_0_MASK)
+  173 0000002A 61C1            STR              R1,[R0,#PORTB_PCR7_OFFSET]
+  174 0000002C         ;Select PORT B Pin 8 for SLCD pin 8 (MUX select 0)
+  175 0000002C 6201            STR              R1,[R0,#PORTB_PCR8_OFFSET]
+  176 0000002E         ;Select PORT B Pin 10 for SLCD pin 11 (MUX select 0)
+  177 0000002E 6281            STR              R1,[R0,#PORTB_PCR10_OFFSET]
+  178 00000030         ;Select PORT B Pin 11 for SLCD pin 12 (MUX select 0)
+  179 00000030 62C1            STR              R1,[R0,#PORTB_PCR11_OFFSET]
+  180 00000032         ;Select PORT B Pin 21 for SLCD pin 6 (MUX select 0)
+  181 00000032 6541            STR              R1,[R0,#PORTB_PCR21_OFFSET]
+  182 00000034         ;Select PORT B Pin 22 for SLCD pin 4 (MUX select 0)
+  183 00000034 6581            STR              R1,[R0,#PORTB_PCR22_OFFSET]
+
+
+
+ARM Macro Assembler    Page 7 KL46Z Hard Fault LCD Display
+
+
+  184 00000036         ;Select PORT B Pin 23 for SLCD pin 3 (MUX select 0)
+  185 00000036 65C1            STR              R1,[R0,#PORTB_PCR23_OFFSET]
+  186 00000038         ;Select PORT C Pin 17 for SLCD pin 5 (MUX select 0)
+  187 00000038 4849            LDR              R0,=PORTC_BASE
+  188 0000003A 6441            STR              R1,[R0,#PORTC_PCR17_OFFSET]
+  189 0000003C         ;Select PORT C Pin 18 for SLCD pin 10 (MUX select 0)
+  190 0000003C 6481            STR              R1,[R0,#PORTC_PCR18_OFFSET]
+  191 0000003E         ;Select PORT D Pin 0 for SLCD pin 1 (MUX select 0)
+  192 0000003E 4849            LDR              R0,=PORTD_BASE
+  193 00000040 6001            STR              R1,[R0,#PORTD_PCR0_OFFSET]
+  194 00000042         ;Select PORT E Pin 4 for SLCD pin 2 (MUX select 0)
+  195 00000042 4849            LDR              R0,=PORTE_BASE
+  196 00000044 6101            STR              R1,[R0,#PORTE_PCR4_OFFSET]
+  197 00000046         ;Select PORT E Pin 5 for SLCD pin 9 (MUX select 0)
+  198 00000046 6101            STR              R1,[R0,#PORTE_PCR4_OFFSET]
+  199 00000048         ;Disable SLCD
+  200 00000048 4848            LDR              R0,=LCD_BASE
+  201 0000004A 2180            MOVS             R1,#LCD_GCR_LCDEN_MASK
+  202 0000004C 6802            LDR              R2,[R0,#LCD_GCR_OFFSET]
+  203 0000004E 438A            BICS             R2,R2,R1
+  204 00000050 6002            STR              R2,[R0,#LCD_GCR_OFFSET]
+  205 00000052         ;Set SLCD for charge pump, high capacitance,
+  206 00000052         ;  pad safe, 32-kHz internal clock (MCGIRCLK),
+  207 00000052         ;  and 32-Hz frame frequency
+  208 00000052         ;LCD_GCR:  CPSEL=1; LADJ=3; PADSAFE=1; FFR=1; SOURCE=1;
+  209 00000052         ;          LCLK=4;DUTY=3
+  216 00000052 4947            LDR              R1,=(LCD_GCR_CPSEL_MASK :OR:                           (3 << LCD_GCR_LA
+DJ_SHIFT) :OR:                           LCD_GCR_PADSAFE_MASK :OR:                           LCD_GCR_FFR_MASK :OR:   
+                        LCD_GCR_SOURCE_MASK :OR:                           (4 << LCD_GCR_LCLK_SHIFT) :OR              
+             (3 << LCD_GCR_DUTY_SHIFT))
+  217 00000054 6001            STR              R1,[R0,#LCD_GCR_OFFSET]
+  218 00000056         ;Set SLCD for no blink
+  219 00000056 2100            MOVS             R1,#LCD_AR_NORMAL_NO_BLINK
+  220 00000058 6041            STR              R1,[R0,#LCD_AR_OFFSET]
+  221 0000005A         ;Set SLCD for no fault detection
+  222 0000005A 4946            LDR              R1,=LCD_FDCR_NO_FAULT_DETECTION
+  223 0000005C 6081            STR              R1,[R0,#LCD_FDCR_OFFSET]
+  224 0000005E         ;Enable pins 7, 8, 10, 11, 17, 18, and 19
+  225 0000005E         ;Enable pins 37, 38, 40, 52, and 53
+  226 0000005E 4946            LDR              R1,=LCD_PEN0_19_18_17_11_10_8_7
+  227 00000060 4A46            LDR              R2,=LCD_PEN1_53_52_40_38_37
+  228 00000062 6101            STR              R1,[R0,#LCD_PENL_OFFSET]
+
+
+
+ARM Macro Assembler    Page 8 KL46Z Hard Fault LCD Display
+
+
+  229 00000064 6142            STR              R2,[R0,#LCD_PENH_OFFSET]
+  230 00000066         ;Enable backplane for COM0-COM3 
+  231 00000066         ;  pins 18, 19, 40, and 52
+  232 00000066 4939            LDR              R1,=LCD_BPEN0_19_18
+  233 00000068 4A45            LDR              R2,=LCD_BPEN1_52_40
+  234 0000006A 6181            STR              R1,[R0,#LCD_BPENL_OFFSET]
+  235 0000006C 61C2            STR              R2,[R0,#LCD_BPENH_OFFSET]
+  236 0000006E         ;Configure waveform registers (64 bytes = 16 words = 4 quadwords)
+  237 0000006E 4945            LDR              R1,=LCD_WF  ;LCD_WF_Quadword_Ptr
+  238 00000070 4A45            LDR              R2,=LCD_WF_Config ;LCD_WF_Config_QuadwordPtr
+  239 00000072 2304            MOVS             R3,#4       ;LCV = 4
+  240 00000074         InitLCD_WF_Repeat                    ;repeat {
+  241 00000074 CAF0            LDM              R2!,{R4-R7} ;  *LCD_WF_Quadword_Ptr++ =
+  242 00000076 C1F0            STM              R1!,{R4-R7} ;    *LCD_WF_Config_Quadword_Ptr++
+  243 00000078 3B01            SUBS             R3,#1       ;  LCV--
+  244 0000007A D1FB            BNE              InitLCD_WF_Repeat ;} until (LCV == 0)
+  245 0000007C         ;Disable SCLD padsafe and enable SLCD
+  246 0000007C 2180            MOVS             R1,#LCD_GCR_LCDEN_MASK
+  247 0000007E 6802            LDR              R2,[R0,#LCD_GCR_OFFSET]
+  248 00000080 4B42            LDR              R3,=LCD_GCR_PADSAFE_MASK
+  249 00000082 430A            ORRS             R2,R2,R1
+  250 00000084 439A            BICS             R2,R2,R3
+  251 00000086 6002            STR              R2,[R0,#LCD_GCR_OFFSET]
+  252 00000088         ;Restore registers used
+  253 00000088 BCFF            POP              {R0-R7}
+  254 0000008A 4770            BX               LR
+  255 0000008C                 ENDP
+  256 0000008C                 ALIGN
+  257 0000008C         LCD_WF_Config
+  258 0000008C         ;Each pin:  2_HGFEDCBA phase enable
+  259 0000008C         ;Pins:                 0    1    2    3    4    5    6    7
+  260 0000008C 00 00 00 
+              00 00 00 
+              00 00            DCB              0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+  261 00000094         ;Pins:                 8    9   10   11   12   13   14   15
+  262 00000094 00 00 00 
+              00 00 00 
+              00 00            DCB              0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+  263 0000009C         ;18=COM3:Phases D and H
+  264 0000009C         ;19=COM2:Phases C and G
+  265 0000009C         ;Pins:                16   17   18   19   20   21   22   23
+  266 0000009C 00 00 88 
+
+
+
+ARM Macro Assembler    Page 9 KL46Z Hard Fault LCD Display
+
+
+              44 00 00 
+              00 00            DCB              0x00,0x00,0x88,0x44,0x00,0x00,0x00,0x00
+  267 000000A4         ;Pins:                24   25   26   27   28   29   30   31
+  268 000000A4 00 00 00 
+              00 00 00 
+              00 00            DCB              0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+  269 000000AC         ;Pins:                32   33   34   35   36   37   38   39
+  270 000000AC 00 00 00 
+              00 00 00 
+              00 00            DCB              0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+  271 000000B4         ;40=COM0:Phases A and E
+  272 000000B4         ;Pins:                40   41   42   43   44   45   46   47
+  273 000000B4 11 00 00 
+              00 00 00 
+              00 00            DCB              0x11,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+  274 000000BC         ;52=COM1:Phases B and F
+  275 000000BC         ;Pins:                48   49   50   51   52   53   54   55
+  276 000000BC 00 00 00 
+              00 22 00 
+              00 00            DCB              0x00,0x00,0x00,0x00,0x22,0x00,0x00,0x00
+  277 000000C4         ;Pins:                56   57   58   59   60   61   62   63
+  278 000000C4 00 00 00 
+              00 00 00 
+              00 00            DCB              0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+  279 000000CC                 ALIGN
+  280 000000CC         ;---------------------------------------------------------------
+  281 000000CC                 EXPORT           LCD_PutHex
+  282 000000CC         LCD_PutHex
+                               PROC             {R0-R14},{}
+  283 000000CC         ;****************************************************************
+  284 000000CC         ;Displays 4-digit hex value of least halfword in R0 on LCD
+  285 000000CC         ;****************************************************************
+  286 000000CC         ;R0:value to display
+  287 000000CC         ;R1:nibble mask
+  288 000000CC         ;R2:1)bit shift amount
+  289 000000CC         ;   2)working copy of value to display
+  290 000000CC         ;R3:loop counter variable
+  291 000000CC         ;R4:base address of LCD digit segment setting array
+  292 000000CC         ;R5:digit setment settings
+  293 000000CC         ;R6:pointer to array of WF addresses for LCD pins
+  294 000000CC         ;R7:WF address for current LCD pin
+  295 000000CC B4FE            PUSH             {R1-R7}
+
+
+
+ARM Macro Assembler    Page 10 KL46Z Hard Fault LCD Display
+
+
+  296 000000CE 2304            MOVS             R3,#4       ;Digits = 4
+  297 000000D0 4E2F            LDR              R6,=LCD_WF_FRONTPLANE_PINS
+  298 000000D2 4C30            LDR              R4,=LCD_DIGITS
+  299 000000D4 220C            MOVS             R2,#12      ;Bit offset of most significant nibble
+  300 000000D6 210F            MOVS             R1,#0xF     ;Least nibble mask
+  301 000000D8         LCD_PutHex_Repeat                    ;repeat {
+  302 000000D8 41D0            RORS             R0,R0,R2    ;  NextMSN moved to LSN
+  303 000000DA 4602            MOV              R2,R0       ;  Working copy of value
+  304 000000DC 400A            ANDS             R2,R2,R1    ;  Nibble value
+  305 000000DE 0052            LSLS             R2,R2,#1    ;  Halfword array index --> Byte array index
+  306 000000E0 5CA5            LDRB             R5,[R4,R2]  ;  Digit pin 1 segment value
+  307 000000E2 CE80            LDM              R6!,{R7}    ;  Address of digit pin1's WF register
+  308 000000E4 1C52            ADDS             R2,R2,#1    ;  Next byte index
+  309 000000E6 703D            STRB             R5,[R7,#0]  ;  Write to LCD_WF[LCD_DIGn_PIN1]
+  310 000000E8 CE80            LDM              R6!,{R7}    ;  Address of digit pin2's WF register
+  311 000000EA 5CA5            LDRB             R5,[R4,R2]  ;  Digit pin 2 segment value
+  312 000000EC 703D            STRB             R5,[R7,#0]  ;  Write to LCD_WF[LCD_DIGn_PIN2]
+  313 000000EE 221C            MOVS             R2,#28      ;  Bit offset of next most significant nibble
+  314 000000F0 1E5B            SUBS             R3,R3,#1    ;  Digits--
+  315 000000F2         ;} until (Digits == 0)
+  316 000000F2 D1F1            BNE              LCD_PutHex_Repeat
+  317 000000F4 BCFE            POP              {R1-R7}
+  318 000000F6 4770            BX               LR
+  319 000000F8                 ENDP
+  320 000000F8                 ALIGN
+  321 000000F8         ;---------------------------------------------------------------
+  322 000000F8         ;SLCD pin connections
+  323 000000F8         LCD_WF_Pins
+  324 000000F8         LCD_WF_BACKPLANE_PINS
+  325 000000F8 40053048        DCD              (LCD_WF + LCD_PIN_1)
+  326 000000FC 40053054        DCD              (LCD_WF + LCD_PIN_2)
+  327 00000100 40053033        DCD              (LCD_WF + LCD_PIN_3)
+  328 00000104 40053032        DCD              (LCD_WF + LCD_PIN_4)
+  329 00000108         LCD_WF_FRONTPLANE_PINS
+  330 00000108         LCD_WF_FRONTPLANE_PINS_DIG1
+  331 00000108 40053045        DCD              (LCD_WF + LCD_PIN_5)
+  332 0000010C 40053031        DCD              (LCD_WF + LCD_PIN_6)
+  333 00000110         LCD_WF_FRONTPLANE_PINS_DIG2
+  334 00000110 40053027        DCD              (LCD_WF + LCD_PIN_7)
+  335 00000114 40053028        DCD              (LCD_WF + LCD_PIN_8)
+  336 00000118         LCD_WF_FRONTPLANE_PINS_DIG3
+  337 00000118 40053055        DCD              (LCD_WF + LCD_PIN_9)
+
+
+
+ARM Macro Assembler    Page 11 KL46Z Hard Fault LCD Display
+
+
+  338 0000011C 40053046        DCD              (LCD_WF + LCD_PIN_10)
+  339 00000120         LCD_WF_FRONTPLANE_PINS_DIG4
+  340 00000120 4005302A        DCD              (LCD_WF + LCD_PIN_11)
+  341 00000124 4005302B        DCD              (LCD_WF + LCD_PIN_12)
+  342 00000128         ;---------------------------------------------------------------
+  343 00000128         ;LCD segments
+  344 00000128         ;  A
+  345 00000128         ;F   B
+  346 00000128         ;  G
+  347 00000128         ;E   C
+  348 00000128         ;  D
+  349 00000128         LCD_DIGITS
+  350 00000128         LCD_0
+  351 00000128 BB      LCD_0_PIN1
+                               DCB              (LCD_SEG_D :OR: LCD_SEG_E :OR: LCD_SEG_F)
+  352 00000129 EE      LCD_0_PIN2
+                               DCB              (LCD_SEG_A :OR: LCD_SEG_B :OR: LCD_SEG_C)
+  353 0000012A         LCD_1
+  354 0000012A 00      LCD_1_PIN1
+                               DCB              LCD_CLEAR
+  355 0000012B 66      LCD_1_PIN2
+                               DCB              (LCD_SEG_B :OR: LCD_SEG_C)
+  356 0000012C         LCD_2
+  357 0000012C 77      LCD_2_PIN1
+                               DCB              (LCD_SEG_D :OR: LCD_SEG_E :OR: LCD_SEG_G)
+  358 0000012D CC      LCD_2_PIN2
+                               DCB              (LCD_SEG_A :OR: LCD_SEG_B)
+  359 0000012E         LCD_3
+  360 0000012E 55      LCD_3_PIN1
+                               DCB              (LCD_SEG_D :OR: LCD_SEG_G)
+  361 0000012F EE      LCD_3_PIN2
+                               DCB              (LCD_SEG_A :OR: LCD_SEG_B :OR: LCD_SEG_C)
+  362 00000130         LCD_4
+  363 00000130 CC      LCD_4_PIN1
+                               DCB              (LCD_SEG_F :OR: LCD_SEG_G)
+  364 00000131 66      LCD_4_PIN2
+                               DCB              (LCD_SEG_B :OR: LCD_SEG_C)
+  365 00000132         LCD_5
+  366 00000132 DD      LCD_5_PIN1
+                               DCB              (LCD_SEG_D :OR: LCD_SEG_F :OR: LCD_SEG_G)
+  367 00000133 AA      LCD_5_PIN2
+                               DCB              (LCD_SEG_A :OR: LCD_SEG_C)
+
+
+
+ARM Macro Assembler    Page 12 KL46Z Hard Fault LCD Display
+
+
+  368 00000134         LCD_6
+  369 00000134 FF      LCD_6_PIN1
+                               DCB              (LCD_SEG_D :OR: LCD_SEG_E :OR: LCD_SEG_F :OR: LCD_SEG_G)
+  370 00000135 AA      LCD_6_PIN2
+                               DCB              (LCD_SEG_A :OR: LCD_SEG_C)
+  371 00000136         LCD_7
+  372 00000136 00      LCD_7_PIN1
+                               DCB              LCD_CLEAR
+  373 00000137 EE      LCD_7_PIN2
+                               DCB              (LCD_SEG_A :OR: LCD_SEG_B :OR: LCD_SEG_C)
+  374 00000138         LCD_8
+  375 00000138 FF      LCD_8_PIN1
+                               DCB              (LCD_SEG_D :OR: LCD_SEG_E :OR: LCD_SEG_F :OR: LCD_SEG_G)
+  376 00000139 EE      LCD_8_PIN2
+                               DCB              (LCD_SEG_A :OR: LCD_SEG_B :OR: LCD_SEG_C)
+  377 0000013A         LCD_9
+  378 0000013A CC      LCD_9_PIN1
+                               DCB              (LCD_SEG_F :OR: LCD_SEG_G)
+  379 0000013B EE      LCD_9_PIN2
+                               DCB              (LCD_SEG_A :OR: LCD_SEG_B :OR: LCD_SEG_C)
+  380 0000013C         LCD_A
+  381 0000013C EE      LCD_A_PIN1
+                               DCB              (LCD_SEG_E :OR: LCD_SEG_F :OR: LCD_SEG_G)
+  382 0000013D EE      LCD_A_PIN2
+                               DCB              (LCD_SEG_A :OR: LCD_SEG_B :OR: LCD_SEG_C)
+  383 0000013E         LCD_B
+  384 0000013E FF      LCD_B_PIN1
+                               DCB              (LCD_SEG_D :OR: LCD_SEG_E :OR: LCD_SEG_F :OR: LCD_SEG_G)
+  385 0000013F 22      LCD_B_PIN2
+                               DCB              LCD_SEG_C
+  386 00000140         LCD_C
+  387 00000140 BB      LCD_C_PIN1
+                               DCB              (LCD_SEG_D :OR: LCD_SEG_E :OR: LCD_SEG_F)
+  388 00000141 88      LCD_C_PIN2
+                               DCB              LCD_SEG_A
+  389 00000142         LCD_D
+  390 00000142 77      LCD_D_PIN1
+                               DCB              (LCD_SEG_D :OR: LCD_SEG_E :OR: LCD_SEG_G)
+  391 00000143 66      LCD_D_PIN2
+                               DCB              (LCD_SEG_B :OR: LCD_SEG_C)
+  392 00000144         LCD_E
+  393 00000144 FF      LCD_E_PIN1
+
+
+
+ARM Macro Assembler    Page 13 KL46Z Hard Fault LCD Display
+
+
+                               DCB              (LCD_SEG_D :OR: LCD_SEG_E :OR: LCD_SEG_F :OR: LCD_SEG_G)
+  394 00000145 88      LCD_E_PIN2
+                               DCB              LCD_SEG_A
+  395 00000146         LCD_F
+  396 00000146 EE      LCD_F_PIN1
+                               DCB              (LCD_SEG_E :OR: LCD_SEG_F :OR: LCD_SEG_G)
+  397 00000147 88      LCD_F_PIN2
+                               DCB              LCD_SEG_A
+  398 00000148                 ALIGN
+  399 00000148                 END
+              40047000 
+              000C0000 
+              40048038 
+              00083C00 
+              4004A000 
+              01000000 
+              4004B000 
+              4004C000 
+              4004D000 
+              40053000 
+              00B08463 
+              00000000 
+              000E0D80 
+              00300160 
+              00100100 
+              40053020 
+              00000000 
+              00008000 
+              00000000 
+              00000000 
+Command Line: --debug --length=49 --width=120 --diag_suppress=9931 --cpu=Cortex-M0+ --apcs=interwork --depend=.\objects\
+hardfault_lcd.d -o.\objects\hardfault_lcd.o -I.\RTE\_Target_1 -IC:\Keil_v5\ARM\PACK\Keil\Kinetis_KLxx_DFP\1.13.0\Device\
+Include -IC:\Keil_v5\ARM\CMSIS\Include --predefine="__EVAL SETA 1" --predefine="__UVISION_VERSION SETA 524" --predefine=
+"MKL46Z256xxx4 SETA 1" --list=.\listings\hardfault_lcd.lst HardFault_LCD.s
